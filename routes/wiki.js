@@ -3,6 +3,10 @@ var mongo = require('mongodb');
 var Server = mongo.Server,
     Db = mongo.Db,
     BSON = mongo.BSONPure;
+
+/*
+ * Le code est inspiré de cette page : http://coenraets.org/blog/2012/10/creating-a-rest-api-using-node-js-express-and-mongodb/
+ */
  
 var server = new Server('localhost', 27017, {auto_reconnect: true});
 db = new Db('labo7_exercice2', server, {'w': 'journal'});
@@ -23,12 +27,12 @@ exports.findByTitle = function(req, res) {
     var titre = req.params.title;
     console.log('Recherche des wikis avec le titre : ' + titre);
     db.collection('wiki', function(err, collection) {
-        collection.find({'titre': titre}, function(err, objet) {
+        collection.find({'titre': new RegExp(titre)}).toArray(function(err, objets) {
             if(err) {
                 console.log('Erreur sur la récupération de wiki!');
                 res.send(500, 'Erreur interne');
             } else {
-                res.json(objet);
+                res.json(objets);
             }
         });
     });
@@ -40,15 +44,37 @@ exports.findById = function(req, res) {
     /*
      * 0- Compléter la recherche par ID. On retourne qu'un seul objet.
      */
-
-    res.json('Non implémenté')
+    /*
+     * Note : j'ai modifier le URL de la route, il y avait confusion avec findByTitle.
+     */
+    db.collection('wiki', function(err, collection) {
+        collection.findOne({'_id':new BSON.ObjectID(id)}, function(err, objet) {
+            if(err) {
+                console.log('Erreur sur la récupération de wiki!');
+                res.send(500, 'Erreur interne');
+            } else {
+                res.json(objet);
+            }
+        });
+    });
 };
 
 exports.findAll = function(req, res) {
     /*
      * 1- Compléter la recherche de tous les wiki
      */
-    res.json('Non implémenté')
+    console.log('Recherche de tous les wikis')
+    db.collection('wiki', function(err, collection) {
+        collection.find().toArray(function(err, objets) {
+            if(err) {
+                console.log('Erreur sur la récupération de wiki!');
+                res.send(500, 'Erreur interne');
+            } else {
+                res.json(objets);
+            }
+        });
+    });
+
 };
  
 exports.addWiki = function(req, res) {
@@ -57,7 +83,16 @@ exports.addWiki = function(req, res) {
     /*
      * 2- Compléter l'ajout de wiki
      */
-    res.json('Non implémenté')
+    db.collection('wiki', function(err, collection) {
+        collection.insert(wiki, {safe:true}, function(err, result) {
+            if (err) {
+                console.log('Erreur sur l\'ajout de wiki!');
+                res.send(500, 'Erreur interne');
+            } else {
+                res.send(result[0]);
+            }
+        });
+    });
 }
  
 exports.updateWiki = function(req, res) {
@@ -68,7 +103,17 @@ exports.updateWiki = function(req, res) {
     /*
      * 3- Compléter la mise à jour du wiki. La mise à jour ecrase tout le document.
      */
-    res.json('Non implémenté')
+    db.collection('wiki', function(err, collection) {
+        collection.update({'_id':new BSON.ObjectID(id)}, wiki, {safe:true}, function(err, result) {
+            if (err) {
+                console.log('Erreur sur la modification de wiki!');
+                res.send(500, 'Erreur interne');
+            } else {
+                console.log(result + ' document mis a jour');
+                res.send(wiki);
+            }
+        });
+    });
 }
  
 exports.deleteWiki = function(req, res) {
@@ -76,7 +121,18 @@ exports.deleteWiki = function(req, res) {
     /*
      * 4- Suppression d'un wiki
      */
-    res.json('Non implémenté')
+    var id = req.params.id;
+    db.collection('wiki', function(err, collection) {
+        collection.remove({'_id':new BSON.ObjectID(id)}, {safe:true}, function(err, result) {
+            if (err) {
+                console.log('Erreur sur la suppression de wiki!');
+                res.send(500, 'Erreur interne');
+            } else {
+                console.log(result + ' wiki(s) supprimé');
+                res.send(req.body);
+            }
+        });
+    });
 }
  
 var populateDB = function() {

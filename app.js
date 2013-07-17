@@ -29,7 +29,7 @@ if ('development' == app.get('env')) {
 
 app.get('/wikis', wiki.findAll);
 app.get('/wiki/:id', wiki.findById);
-app.get('/wiki/:title', wiki.findByTitle);
+app.get('/wiki/find/:title', wiki.findByTitle);
 app.post('/wiki', wiki.addWiki);
 app.put('/wiki/:id', wiki.updateWiki);
 app.delete('/wiki/:id', wiki.deleteWiki);
